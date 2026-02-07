@@ -1,6 +1,29 @@
-@import "tailwindcss";
-@config "../tailwind.config.ts";
+@theme {
+  /* Colors */
+  --color-sanrio-red: #E60012;
+  --color-sanrio-pink: #FFB3D9;
+  --color-sanrio-lavender: #B19CD9;
+  --color-chocolate: #3D2817;
+  --color-cream: #FFF8E7;
 
+  /* Fonts */
+  --font-display: var(--font-display);
+  --font-mono: var(--font-mono);
+
+  /* Border radius */
+  --radius-chunky: 30px;
+  --radius-mega: 50px;
+
+  /* Box shadows (hard, no blur, vibes immaculate) */
+  --shadow-hard: 8px 8px 0px #000;
+  --shadow-hard-sm: 4px 4px 0px #000;
+  --shadow-hard-lg: 12px 12px 0px #000;
+  --shadow-hard-chocolate: 8px 8px 0px #3D2817;
+}
+
+/* =========================
+   BASE STYLES
+   ========================= */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -9,27 +32,29 @@
   body {
     @apply bg-cream text-chocolate;
   }
-  
+
   h1, h2, h3, h4, h5, h6 {
     @apply font-display;
   }
 }
 
+/* =========================
+   CUSTOM UTILITIES
+   ========================= */
 @layer utilities {
-  /* Custom animations we'll use */
   .animate-hop {
     animation: hop 0.3s ease-in-out;
   }
-  
+
   @keyframes hop {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-10px); }
   }
-  
+
   .animate-float {
     animation: float 3s ease-in-out infinite;
   }
-  
+
   @keyframes float {
     0%, 100% { transform: translateY(0px); }
     50% { transform: translateY(-20px); }
