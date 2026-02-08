@@ -1,36 +1,35 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+Ribbon
 
-## Getting Started
+Create a link. Send it. Watch them say yes.
 
-First, run the development server:
+![image1.jpg]
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+The Design Philosophy: "Digital Scrapbook" (Opinionated Maximalism)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+User Journey & Feature Map:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+A. Generator Page
+• Custom Inputs: * Recipient Name (Max 15 chars)
+• Vibe Check (Select from 3 color themes: Classic Red, Soft Pink, or Cyber Lavender)
+• The Icon: Instead of a raw photo upload (which breaks layouts), let them upload an image that gets automatically masked into a circle with a thick borde
+• The Link Engine: On "Generate," the site creates a unique ID and copies a URL to the clipboard.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+B. Landing Page (The Ask)   
 
-## Learn More
 
-To learn more about Next.js, take a look at the following resources:
+Backend System Design (Robust & Lean): 
+• Database: Supabase (PostgreSQL) or Firebase.
+• Schema: * id: UUID
+• recipient_name: String
+• image_url: String (Store images in Supabase Storage/S3)
+• theme_id: Integer
+• slug: ShortID (for the URL: site.com/be-mine/xyz123)
+• Storage: Use a simple signed URL for the uploaded icon. To keep it light, resize images on the client side before upload to 400 \times 400px to save bandwidth.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+![image2.jpg]
+ 
+Technical Stack
+• Frontend: Next.js (for SEO and fast routing).
+• Animations: GSAP (for the "No" button logic and entrance staggers).
+• 3D Elements: Three.js (used strictly for the background—a "floating world" of 3D objects that react to scroll).
+• Styling: Tailwind CSS (with a custom configuration for those hard-shadows and specific Sanrio hex codes). 

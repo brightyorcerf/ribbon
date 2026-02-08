@@ -2,24 +2,42 @@
 
 import { useState, useEffect } from 'react'
 import { supabase, type Link } from '@/lib/supabase'
-import HopsAwayButton from './HopsAwayButton'
 import gsap from 'gsap'
 
 type LandingPageProps = {
   link: Link
 }
 
-const THEME_COLORS: Record<number, { primary: string; secondary: string; bgClass: string }> = {
-  1: { primary: '#E60012', secondary: '#FFB3D9', bgClass: 'bg-sanrio-red' },
-  2: { primary: '#FFB3D9', secondary: '#E60012', bgClass: 'bg-sanrio-pink' },
-  3: { primary: '#B19CD9', secondary: '#FFB3D9', bgClass: 'bg-sanrio-lavender' },
+const THEME_COLORS: Record<number, { 
+  primary: string
+  secondary: string
+  accent: string
+  emoji: string
+}> = {
+  1: { 
+    primary: '#E60012', 
+    secondary: '#FFB3D9',
+    accent: '#FF6B9D',
+    emoji: '❤️'
+  },
+  2: { 
+    primary: '#FFB3D9', 
+    secondary: '#FFC0E5',
+    accent: '#FF85C0',
+    emoji: '🌸'
+  },
+  3: { 
+    primary: '#B19CD9', 
+    secondary: '#D4C5F9',
+    accent: '#9D7FDB',
+    emoji: '💜'
+  },
 }
 
-// Generate sparkles data
 const generateSparkles = () => {
-  return [...Array(20)].map(() => ({
-    left: Math.random() * 100,
-    top: Math.random() * 100,
+  return [...Array(10)].map(() => ({
+    left: 10 + Math.random() * 80,
+    top: 10 + Math.random() * 80,
     delay: Math.random() * 3,
     duration: 3 + Math.random() * 2,
   }))
@@ -29,155 +47,193 @@ export default function LandingPage({ link }: LandingPageProps) {
   const [response, setResponse] = useState<'yes' | 'no' | null>(null)
   const [showIdentity, setShowIdentity] = useState(false)
   const [sparkles, setSparkles] = useState<Array<{left: number, top: number, delay: number, duration: number}>>([])
+  const [noClickCount, setNoClickCount] = useState(0)
   const theme = THEME_COLORS[link.theme_id]
 
-  // Generate sparkles only on client side (fixes hydration error)
   useEffect(() => {
     setSparkles(generateSparkles())
   }, [])
 
-  // Handle "Yes" click
   const handleYes = async () => {
-    // Update database
     await supabase
       .from('links')
       .update({ response: 'yes' })
       .eq('slug', link.slug)
 
     setResponse('yes')
-    
-    // Trigger celebration animation
     createConfetti()
     
-    // Reveal identity if anonymous
-    if (link.is_anonymous) {
+    if (link.is_anonymous && link.creator_name) {
       setTimeout(() => {
         setShowIdentity(true)
       }, 1500)
     }
   }
 
-  // Handle final "No" click
-  const handleNo = async () => {
-    // Update database
+  const handleNo = () => {
+    if (noClickCount < 3) {
+      const button = document.getElementById('no-button')
+      if (button) {
+        gsap.to(button, {
+          scale: 1 - (noClickCount + 1) * 0.25,
+          rotation: 10,
+          yoyo: true,
+          repeat: 5,
+          duration: 0.1,
+        })
+      }
+      setNoClickCount(noClickCount + 1)
+    } else {
+      finalNo()
+    }
+  }
+
+  const finalNo = async () => {
     await supabase
       .from('links')
       .update({ response: 'no' })
       .eq('slug', link.slug)
 
     setResponse('no')
-    
-    // Trigger sad animation
     document.body.style.filter = 'grayscale(100%)'
   }
 
-  // Create confetti explosion
   const createConfetti = () => {
-    const colors = [theme.primary, theme.secondary, '#FFD700']
-    const confettiCount = 50
+    const confettiCount = 40
 
     for (let i = 0; i < confettiCount; i++) {
       const confetti = document.createElement('div')
-      confetti.className = 'confetti'
+      confetti.textContent = i % 2 === 0 ? theme.emoji : '✨'
       confetti.style.cssText = `
         position: fixed;
-        width: 10px;
-        height: 10px;
-        background: ${colors[Math.floor(Math.random() * colors.length)]};
+        font-size: ${16 + Math.random() * 12}px;
         top: 50%;
         left: 50%;
-        border-radius: ${Math.random() > 0.5 ? '50%' : '0%'};
         z-index: 9999;
+        pointer-events: none;
       `
       document.body.appendChild(confetti)
 
       gsap.to(confetti, {
-        x: (Math.random() - 0.5) * 1000,
-        y: (Math.random() - 0.5) * 1000,
+        x: (Math.random() - 0.5) * 800,
+        y: (Math.random() - 0.5) * 800,
         rotation: Math.random() * 360,
         opacity: 0,
-        duration: 2,
+        duration: 1.5 + Math.random(),
         ease: 'power2.out',
         onComplete: () => confetti.remove(),
       })
     }
   }
 
-  // Redirect to generator after "No"
-  const handleMakeOwn = () => {
-    window.location.href = '/'
+  const getNoButtonText = () => {
+    switch (noClickCount) {
+      case 0: return 'No'
+      case 1: return 'Really?'
+      case 2: return 'Sure?'
+      default: return 'Okay... 😢'
+    }
   }
 
-  // YES RESPONSE STATE
+  // YES STATE
   if (response === 'yes') {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4 md:p-8 bg-cream">
-        <div className="text-center max-w-2xl w-full">
-          <h1 className="text-5xl md:text-8xl font-display mb-6 md:mb-8 animate-bounce">
+      <div 
+        className="min-h-screen flex items-center justify-center p-8 md:p-12"
+        style={{
+          background: `linear-gradient(135deg, ${theme.primary}15 0%, ${theme.secondary}25 100%)`
+        }}
+      >
+        <div 
+          className="absolute inset-8 md:inset-16 border-8 rounded-[60px] pointer-events-none"
+          style={{ borderColor: theme.primary }}
+        />
+
+        <div className="relative z-10 text-center max-w-2xl w-full px-8 space-y-10">
+          <h1 className="text-6xl md:text-8xl font-display text-chocolate">
             🎉 YES! 🎉
           </h1>
           
-          {link.is_anonymous && showIdentity && (
-            <div className="mb-6 md:mb-8 bg-white p-4 md:p-6 rounded-chunky border-4 border-chocolate shadow-hard-chocolate">
-              <p className="font-display text-2xl md:text-3xl text-chocolate mb-2">
+          {link.is_anonymous && link.creator_name && (
+            <div 
+              className={`bg-white p-10 rounded-chunky border-4 border-chocolate shadow-hard-chocolate space-y-5 transition-all duration-500 ${
+                showIdentity ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+              }`}
+            >
+              <p className="font-display text-3xl text-chocolate">
                 It was...
               </p>
-              <p className="font-display text-4xl md:text-5xl break-words" style={{ color: theme.primary }}>
+              <p 
+                className="font-display text-6xl break-words"
+                style={{ color: theme.primary }}
+              >
                 {link.creator_name}! 💝
               </p>
             </div>
           )}
           
-          <p className="text-lg md:text-2xl font-mono text-chocolate/70 mb-6 md:mb-8 px-4">
-            {link.is_anonymous && !showIdentity 
-              ? 'Your secret admirer is so happy right now! 💖'
-              : `${link.creator_name} is over the moon! 💖`
-            }
-          </p>
+          <div className="bg-white p-10 rounded-chunky border-4 border-chocolate shadow-hard-chocolate space-y-8">
+            <p className="text-3xl font-display text-chocolate leading-relaxed">
+              {link.creator_name || 'They'} is over the moon! 💖
+            </p>
 
-          <div className="bg-white p-4 md:p-6 rounded-chunky border-4 border-chocolate shadow-hard inline-block">
-            <p className="font-mono text-chocolate/70 text-xs md:text-sm mb-2">
-              Screenshot this moment! 📸
-            </p>
-            <p className="font-display text-lg md:text-xl text-chocolate break-words">
-              {link.recipient_name} said YES at
-            </p>
-            <p className="font-mono text-chocolate/70 text-sm md:text-base">
-              {new Date().toLocaleString()}
-            </p>
+            <div className="border-t-2 border-chocolate/20 pt-8 space-y-4">
+              <p className="font-mono text-chocolate/60 text-sm">
+                📸 Screenshot this moment!
+              </p>
+              <p className="font-display text-2xl text-chocolate break-words">
+                {link.recipient_name} said YES
+              </p>
+              <p className="font-mono text-chocolate/70">
+                {new Date().toLocaleDateString('en-US', { 
+                  month: 'long', 
+                  day: 'numeric', 
+                  year: 'numeric',
+                  hour: 'numeric',
+                  minute: '2-digit'
+                })}
+              </p>
+            </div>
           </div>
+
+          <a
+            href="/"
+            className="inline-block bg-sanrio-red text-white font-display text-xl py-5 px-10 rounded-chunky border-4 border-chocolate shadow-hard hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
+          >
+            Make Your Own Link 🎀
+          </a>
         </div>
       </div>
     )
   }
 
-  // NO RESPONSE STATE
+  // NO STATE
   if (response === 'no') {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4 md:p-8 bg-cream transition-all duration-1000">
-        <div className="text-center max-w-2xl w-full">
-          <h1 className="text-5xl md:text-8xl font-display mb-6 md:mb-8 text-chocolate/50">
+      <div className="min-h-screen flex items-center justify-center p-8 md:p-12 bg-cream">
+        <div className="text-center max-w-2xl w-full px-8 space-y-10">
+          <h1 className="text-6xl md:text-8xl font-display text-chocolate/50">
             💔
           </h1>
           
-          <p className="text-2xl md:text-3xl font-display text-chocolate/70 mb-3 md:mb-4 px-4">
-            Oof, that's cold...
+          <p className="text-4xl font-display text-chocolate/70">
+            That's heartbreaking...
           </p>
           
-          <p className="text-lg md:text-xl font-mono text-chocolate/50 mb-8 md:mb-12 px-4">
-            {link.is_anonymous 
-              ? "Someone's heart just broke a little... 😢"
-              : `${link.creator_name} will understand... eventually 😢`
+          <p className="text-xl font-mono text-chocolate/50">
+            {link.creator_name 
+              ? `${link.creator_name} will understand... 😢`
+              : "They'll understand... 😢"
             }
           </p>
 
-          <div className="space-y-4 px-4">
-            <p className="font-mono text-chocolate/70 text-sm md:text-base">
-              Want to shoot YOUR shot with someone?
+          <div className="space-y-6">
+            <p className="font-mono text-chocolate/70">
+              Want to take YOUR shot?
             </p>
             <button
-              onClick={handleMakeOwn}
-              className="bg-sanrio-lavender text-white font-display text-lg md:text-xl py-3 md:py-4 px-6 md:px-8 rounded-chunky border-4 border-chocolate shadow-hard hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
+              onClick={() => window.location.href = '/'}
+              className="bg-sanrio-lavender text-white font-display text-xl py-5 px-10 rounded-chunky border-4 border-chocolate shadow-hard hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
             >
               Make My Own Link 💘
             </button>
@@ -187,20 +243,32 @@ export default function LandingPage({ link }: LandingPageProps) {
     )
   }
 
-  // DEFAULT STATE (THE ASK)
+  // DEFAULT STATE
   return (
     <div 
-      className="min-h-screen flex flex-col items-center justify-center p-4 md:p-8 relative overflow-hidden"
-      style={{ 
-        background: `linear-gradient(135deg, ${theme.primary}20 0%, ${theme.secondary}20 100%)` 
+      className="min-h-screen flex items-center justify-center p-8 md:p-12 relative overflow-hidden"
+      style={{
+        background: `linear-gradient(135deg, ${theme.primary}15 0%, ${theme.secondary}25 100%)`
       }}
     >
-      {/* Floating sparkles background */}
-      <div className="absolute inset-0 pointer-events-none">
+      {/* Border */}
+      <div 
+        className="absolute inset-8 md:inset-16 border-8 rounded-[60px] pointer-events-none"
+        style={{ borderColor: theme.primary }}
+      />
+
+      {/* Corner emojis */}
+      <div className="absolute top-12 left-12 text-4xl opacity-40">{theme.emoji}</div>
+      <div className="absolute top-12 right-12 text-4xl opacity-40">{theme.emoji}</div>
+      <div className="absolute bottom-12 left-12 text-4xl opacity-40">{theme.emoji}</div>
+      <div className="absolute bottom-12 right-12 text-4xl opacity-40">{theme.emoji}</div>
+
+      {/* Sparkles */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {sparkles.map((sparkle, i) => (
           <div
             key={i}
-            className="absolute text-2xl md:text-4xl opacity-20 animate-float"
+            className="absolute text-2xl opacity-15 animate-float"
             style={{
               left: `${sparkle.left}%`,
               top: `${sparkle.top}%`,
@@ -213,57 +281,74 @@ export default function LandingPage({ link }: LandingPageProps) {
         ))}
       </div>
 
-      {/* Main content */}
-      <div className="relative z-10 text-center max-w-2xl w-full px-4">
+      {/* Content */}
+      <div className="relative z-10 text-center max-w-2xl w-full px-8 space-y-10">
         
-        {/* Profile icon */}
+        {/* Small profile image */}
         {link.icon_url && (
-          <div className="mb-6 md:mb-8 flex justify-center">
+          <div className="flex justify-center">
             <img
               src={link.icon_url}
               alt="Profile"
-              className="w-24 h-24 md:w-40 md:h-40 rounded-full border-4 md:border-8 border-chocolate shadow-hard-chocolate object-cover animate-float"
+              className="w-24 h-24 md:w-28 md:h-28 rounded-full border-6 border-chocolate shadow-hard-chocolate object-cover"
             />
           </div>
         )}
 
         {/* Greeting */}
-        <h1 className="text-4xl md:text-7xl font-display mb-4 md:mb-6 break-words leading-tight" style={{ color: theme.primary }}>
+        <h1 
+          className="text-5xl md:text-6xl font-display break-words leading-tight" 
+          style={{ color: theme.primary }}
+        >
           Hey {link.recipient_name}! 👋
         </h1>
 
-        {/* From line (only if not anonymous) */}
-        {!link.is_anonymous && (
-          <p className="text-lg md:text-2xl font-mono text-chocolate/70 mb-6 md:mb-8 break-words">
-            From: {link.creator_name} 💝
+        {/* From */}
+        {!link.is_anonymous && link.creator_name && (
+          <p className="text-2xl font-mono text-chocolate/70 break-words">
+            From: <span style={{ color: theme.accent }}>{link.creator_name}</span> 💝
           </p>
         )}
 
-        {/* The question */}
-        <div className="bg-white p-6 md:p-12 rounded-chunky border-4 border-chocolate shadow-hard-chocolate mb-8 md:mb-12">
-          <p className="text-3xl md:text-5xl font-display mb-6 md:mb-8 text-chocolate leading-tight">
+        {/* Question card */}
+        <div className="bg-white p-10 md:p-12 rounded-chunky border-4 border-chocolate shadow-hard-chocolate space-y-10">
+          <p className="text-4xl md:text-5xl font-display text-chocolate leading-tight">
             Will you be mine? 💕
           </p>
 
-          {/* Buttons container */}
-          <div className="flex flex-col md:flex-row gap-4 md:gap-6 justify-center items-center">
-            {/* YES button */}
+          {/* Buttons - proper sizing */}
+          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
             <button
               onClick={handleYes}
-              className="w-full md:w-auto bg-sanrio-red text-white font-display text-xl md:text-2xl py-3 md:py-4 px-8 md:px-12 rounded-chunky border-4 border-chocolate shadow-hard-chocolate hover:translate-x-2 hover:translate-y-2 hover:shadow-none transition-all"
+              className="bg-sanrio-red text-white font-display text-2xl py-5 px-14 rounded-chunky border-4 border-chocolate shadow-hard-chocolate hover:translate-x-2 hover:translate-y-2 hover:shadow-none transition-all"
             >
               YES! 💝
             </button>
 
-            {/* NO button (hops away) */}
-            <HopsAwayButton onFinalNo={handleNo} />
+            <button
+              id="no-button"
+              onClick={handleNo}
+              className="bg-chocolate/10 text-chocolate font-display text-2xl py-5 px-14 rounded-chunky border-4 border-chocolate/30 hover:border-chocolate/50 transition-all"
+              style={{
+                transform: `scale(${1 - noClickCount * 0.25})`,
+              }}
+            >
+              {getNoButtonText()}
+            </button>
           </div>
+
+          {noClickCount > 0 && noClickCount < 3 && (
+            <p className="font-mono text-sm text-chocolate/60 animate-pulse pt-4">
+              {noClickCount === 1 && "Think about it... 🥺"}
+              {noClickCount === 2 && "Last chance! 💔"}
+            </p>
+          )}
         </div>
 
         {/* Anonymous hint */}
         {link.is_anonymous && (
-          <p className="text-xs md:text-sm font-mono text-chocolate/50 px-4">
-            🎭 This is from a secret admirer... click "YES" to find out who! 
+          <p className="text-sm font-mono text-chocolate/50 px-8 py-5 bg-white/70 rounded-chunky border-2 border-chocolate/20">
+            🎭 Secret admirer... click "YES" to find out who! 
           </p>
         )}
       </div>

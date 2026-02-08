@@ -1,25 +1,31 @@
 import type { Metadata } from "next";
-import { DynaPuff, JetBrains_Mono } from "next/font/google";
+import { Fredoka, Quicksand } from "next/font/google";
 import "./globals.css";
 
-// Chunky display font
-const dynaPuff = DynaPuff({
+/* ---------------- Fonts ---------------- */
+
+// Rounded, playful display font
+const fredoka = Fredoka({
   subsets: ["latin"],
   variable: "--font-display",
-  weight: ["400", "500", "600", "700"],
+  weight: ["500", "600"],
 });
 
-// Crisp monospace font
-const jetbrainsMono = JetBrains_Mono({
+// Clean, friendly body font
+const quicksand = Quicksand({
   subsets: ["latin"],
-  variable: "--font-mono",
-  weight: ["400", "500", "600"],
+  variable: "--font-body",
+  weight: ["400", "500"],
 });
+
+/* ---------------- Metadata ---------------- */
 
 export const metadata: Metadata = {
-  title: "Ribbon 🎀 - Make Your Ask",
+  title: "Ribbon 🎀 – Make Your Ask",
   description: "Create a personalized link to ask your crush out",
 };
+
+/* ---------------- Layout ---------------- */
 
 export default function RootLayout({
   children,
@@ -28,7 +34,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${dynaPuff.variable} ${jetbrainsMono.variable} font-mono antialiased`}>
+      <body
+        className={`
+          ${fredoka.variable}
+          ${quicksand.variable}
+          antialiased
+        `}
+      >
         {children}
       </body>
     </html>

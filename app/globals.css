@@ -60,3 +60,67 @@
     50% { transform: translateY(-20px); }
   }
 }
+
+.form-shell {
+  max-width: 460px;
+  width: 100%;
+  padding: 28px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 20px 40px rgba(255, 77, 109, 0.25);
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.input {
+  width: 100%;
+  padding: 14px 22px;
+  border-radius: 999px;
+  border: none;
+  background: white;
+  font-size: 15px;
+  box-shadow: inset 0 0 0 1.5px rgba(255, 182, 193, 0.6);
+}
+
+.input:focus {
+  outline: none;
+  box-shadow:
+    0 0 0 4px rgba(255, 182, 193, 0.35),
+    inset 0 0 0 1.5px #ff4d6d;
+}
+
+.primary-btn {
+  width: 100%;
+  padding: 16px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ff6b85, #ff4d6d);
+  color: white;
+  font-weight: 600;
+}
+
+
+/* Dreamy background */
+.bg-valentine {
+  background:
+    radial-gradient(circle at top, rgba(255, 182, 193, 0.35), transparent 60%),
+    url('/background.jpg') center / cover no-repeat;
+}
+
+/* Floating Snoopy */
+.snoopy-float {
+  position: absolute;
+  bottom: -20px;
+  left: -40px;
+  width: 180px;
+  animation: snoopyFloat 6s ease-in-out infinite;
+  opacity: 0.9;
+}
+
+@keyframes snoopyFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-18px); }
+}
