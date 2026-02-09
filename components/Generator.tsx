@@ -40,6 +40,16 @@ const THEMES: Theme[] = [
   },
 ]
 
+// 🔒 SECURITY: Sanitize user input to prevent XSS
+const sanitizeInput = (input: string): string => {
+  return input
+    .trim()
+    .replace(/[<>]/g, '') // Remove HTML tags
+    .replace(/['"]/g, '') // Remove quotes
+    .replace(/javascript:/gi, '') // Remove javascript: protocol
+    .substring(0, 50) // Hard limit
+}
+
 export default function Generator() {
   const [recipientName, setRecipientName] = useState('')
   const [creatorName, setCreatorName] = useState('')
@@ -49,7 +59,9 @@ export default function Generator() {
   const [iconPreview, setIconPreview] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedUrl, setGeneratedUrl] = useState<string | null>(null)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null) 
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [lastGenTime, setLastGenTime] = useState(0) // ⚡ Rate limiting
+  const [clipboardCopied, setClipboardCopied] = useState(false)
 
   useEffect(() => {
     document.body.classList.add('generator-bg')
@@ -79,6 +91,9 @@ export default function Generator() {
     const reader = new FileReader()
     reader.onloadend = () => {
       setIconPreview(reader.result as string)
+    }
+    reader.onerror = () => {
+      setErrorMessage('Failed to read image file')
     }
     reader.readAsDataURL(file)
   }
@@ -116,7 +131,16 @@ export default function Generator() {
 
   const handleGenerate = async () => {
     setErrorMessage(null)
+    setClipboardCopied(false)
 
+    // ⚡ RATE LIMITING: Prevent spam
+    const now = Date.now()
+    if (now - lastGenTime < 3000) {
+      setErrorMessage('Please wait a moment before creating another link...')
+      return
+    }
+
+    // Validation
     if (!recipientName.trim()) {
       setErrorMessage('Please enter a recipient name')
       return
@@ -132,7 +156,13 @@ export default function Generator() {
       return
     }
 
+    if (creatorName.length > 20) {
+      setErrorMessage('Your name must be 20 characters or less')
+      return
+    }
+
     setIsGenerating(true)
+    setLastGenTime(now)
 
     // Add haptic feedback for mobile devices
     if ('vibrate' in navigator) {
@@ -145,13 +175,15 @@ export default function Generator() {
 
       if (iconFile) {
         const resizedBlob = await resizeImage(iconFile)
-        const fileName = `${slug}-${Date.now()}.jpg`
+        // 🔒 SECURITY: Add random string to prevent collisions
+        const fileName = `${slug}-${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`
         
         const { error: uploadError } = await supabase.storage
           .from('icons')
           .upload(fileName, resizedBlob, {
             contentType: 'image/jpeg',
-            cacheControl: '3600'
+            cacheControl: '3600',
+            upsert: false // Don't overwrite if exists
           })
 
         if (uploadError) {
@@ -165,12 +197,13 @@ export default function Generator() {
         iconUrl = data.publicUrl
       }
 
+      // 🔒 SECURITY: Sanitize all user inputs
       const { error: dbError } = await supabase
         .from('links')
         .insert({
           slug,
-          recipient_name: recipientName.trim(),
-          creator_name: creatorName.trim(),
+          recipient_name: sanitizeInput(recipientName),
+          creator_name: sanitizeInput(creatorName),
           theme_id: selectedTheme.id,
           icon_url: iconUrl,
           is_anonymous: isAnonymous,
@@ -187,15 +220,21 @@ export default function Generator() {
         ? `Someone made you something special 💝\n${url}\n\n(I don't know who sent this, just passing it along!)`
         : `Hey! I made you something 💝\n${url}`
       
+      // ✅ IMPROVED: Better clipboard handling
       try {
         await navigator.clipboard.writeText(shareMessage)
-      } catch {}
+        setClipboardCopied(true)
+      } catch (err) {
+        console.warn('Clipboard API not available:', err)
+        // Fallback: user can still copy manually from the displayed URL
+      }
 
     } catch (error) {
+      console.error('Generation error:', error)
       if (error instanceof Error) {
         setErrorMessage(error.message)
       } else {
-        setErrorMessage('Something went wrong')
+        setErrorMessage('Something went wrong. Please try again.')
       }
     } finally {
       setIsGenerating(false)
@@ -211,6 +250,19 @@ export default function Generator() {
     setIconPreview(null)
     setGeneratedUrl(null)
     setErrorMessage(null)
+    setClipboardCopied(false)
+  }
+
+  const copyToClipboard = async () => {
+    if (!generatedUrl) return
+    
+    try {
+      await navigator.clipboard.writeText(generatedUrl)
+      setClipboardCopied(true)
+      setTimeout(() => setClipboardCopied(false), 2000)
+    } catch (err) {
+      console.warn('Copy failed:', err)
+    }
   }
 
   return (
@@ -242,10 +294,21 @@ export default function Generator() {
               {generatedUrl}
             </div>
 
-            <div className="flex items-center justify-center gap-2 text-chocolate/70 font-mono text-xs sm:text-sm">
-              <span className="text-base sm:text-lg">📋</span> 
-              <span className="hidden sm:inline">Copied to clipboard!</span>
-              <span className="sm:hidden">Link copied!</span>
+            {/* ✅ FIXED: Proper clipboard status display */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 text-chocolate/70 font-mono text-xs sm:text-sm">
+              {clipboardCopied ? (
+                <>
+                  <span className="text-base sm:text-lg">✅</span> 
+                </>
+              ) : (
+                <button
+                  onClick={copyToClipboard}
+                  className="flex items-center gap-2 px-4 py-2 bg-white/50 hover:bg-white/70 rounded-full transition-colors"
+                >
+                  <span className="text-base sm:text-lg"></span>
+                  <span>Copy Link</span>
+                </button>
+              )}
             </div>
 
             <button
@@ -283,8 +346,13 @@ export default function Generator() {
                 maxLength={15}
                 placeholder="Their name..."
                 className="aero-input"
+                aria-label="Recipient name"
               />
-              <p className="text-xs font-mono text-chocolate/50 px-2">
+              <p className={`text-xs font-mono px-2 transition-colors ${
+                recipientName.length > 12 
+                  ? 'text-red-600 font-bold' 
+                  : 'text-chocolate/50'
+              }`}>
                 {recipientName.length}/15 characters
               </p>
             </div>
@@ -297,10 +365,11 @@ export default function Generator() {
                   checked={isAnonymous}
                   onChange={(e) => setIsAnonymous(e.target.checked)}
                   className="peer sr-only"
+                  aria-label="Send anonymously"
                 />
                 <div className="heart-checkbox">
-                  <span className="peer-checked:hidden text-xl sm:text-2xl opacity-40">🤍</span>
-                  <span className="hidden peer-checked:inline text-xl sm:text-2xl animate-heart-pop">💖</span>
+                  <span className="peer-checked:hidden text-xl sm:text-2xl opacity-40" aria-hidden="true">🤍</span>
+                  <span className="hidden peer-checked:inline text-xl sm:text-2xl animate-heart-pop" aria-hidden="true">💖</span>
                 </div>
                 <div className="flex-1 space-y-1 sm:space-y-1.5">
                   <span className="font-display text-base sm:text-lg block text-chocolate/90 group-hover:text-chocolate transition-colors">
@@ -330,6 +399,7 @@ export default function Generator() {
                 maxLength={20}
                 placeholder="Your name..."
                 className="aero-input"
+                aria-label="Your name"
               />
             </div>
 
@@ -338,7 +408,7 @@ export default function Generator() {
               <label className="block font-display text-lg sm:text-xl md:text-2xl text-chocolate/90">
                 Pick a vibe 🎨
               </label>
-              <div className="grid grid-cols-3 gap-2 sm:gap-3">
+              <div className="grid grid-cols-3 gap-2 sm:gap-3" role="radiogroup" aria-label="Theme selection">
                 {THEMES.map((theme) => (
                   <button
                     key={theme.id}
@@ -348,6 +418,9 @@ export default function Generator() {
                         ? 'vibe-card-selected scale-105'
                         : 'hover:scale-102'
                     }`}
+                    role="radio"
+                    aria-checked={selectedTheme.id === theme.id}
+                    aria-label={`${theme.name} theme`}
                   >
                     <div className={`w-full aspect-square rounded-xl sm:rounded-2xl bg-gradient-to-br ${theme.gradient} flex items-center justify-center shadow-inner border-t-2 sm:border-t-4 border-white/80`}>
                       <span className="text-3xl sm:text-4xl leading-none" style={{ 
@@ -356,7 +429,7 @@ export default function Generator() {
                         justifyContent: 'center',
                         minHeight: '48px',
                         minWidth: '48px'
-                      }}>
+                      }} aria-hidden="true">
                         {theme.emoji}
                       </span>
                     </div>
@@ -377,7 +450,7 @@ export default function Generator() {
                     {iconPreview && (
                       <img 
                         src={iconPreview} 
-                        alt="Preview" 
+                        alt="Uploaded profile preview" 
                         className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-cover border-2 border-white/60 flex-shrink-0"
                       />
                     )}
@@ -391,6 +464,7 @@ export default function Generator() {
                       setIconPreview(null)
                     }}
                     className="font-mono text-xs sm:text-sm text-red-600 hover:text-red-700 underline transition-colors flex-shrink-0"
+                    aria-label="Remove uploaded image"
                   >
                     Remove
                   </button>
@@ -402,9 +476,10 @@ export default function Generator() {
                     accept="image/*"
                     onChange={handleImageChange}
                     className="hidden"
+                    aria-label="Upload profile image"
                   />
                   <div className="text-center space-y-1.5 sm:space-y-2">
-                    <p className="text-3xl sm:text-4xl">📷</p>
+                    <p className="text-3xl sm:text-4xl" aria-hidden="true">📷</p>
                     <p className="font-mono text-chocolate/70 text-xs sm:text-sm">
                       Click to upload
                     </p>
@@ -421,10 +496,11 @@ export default function Generator() {
               onClick={handleGenerate}
               disabled={isGenerating}
               className="btn-plastic w-full disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
+              aria-label="Generate your link"
             >
               {isGenerating ? (
                 <span className="flex items-center justify-center gap-2 sm:gap-3">
-                  <span className="animate-spin">⏳</span>
+                  <span className="animate-spin" aria-hidden="true">⏳</span>
                   <span className="text-base sm:text-lg md:text-xl">Creating Magic...</span>
                 </span>
               ) : (
