@@ -228,11 +228,6 @@ export default function LandingPage({ link }: LandingPageProps) {
         className="min-h-screen flex items-center justify-center p-8 md:p-12"
         style={getBackgroundStyle()}
       >
-        <div 
-          className="absolute inset-8 md:inset-16 border-8 rounded-[60px] pointer-events-none"
-          style={{ borderColor: theme.primary }}
-          aria-hidden="true"
-        />
 
         <div className="relative z-10 text-center max-w-2xl w-full px-8 space-y-10">
           <p className="text-6xl md:text-8xl font-display text-white" role="status" aria-live="polite">
@@ -335,12 +330,6 @@ export default function LandingPage({ link }: LandingPageProps) {
       className="min-h-screen flex items-center justify-center p-4 md:p-12 relative overflow-hidden"
       style={getBackgroundStyle()}
     >
-      {/* Border */}
-      <div 
-        className="absolute inset-8 md:inset-16 border-8 rounded-[60px] pointer-events-none"
-        style={{ borderColor: theme.primary }}
-        aria-hidden="true"
-      />
 
       {/* Corner emojis */}
       <div className="absolute top-12 left-12 text-4xl opacity-40" aria-hidden="true">{theme.emoji}</div>
@@ -415,7 +404,7 @@ export default function LandingPage({ link }: LandingPageProps) {
         )}
 
         {/* Question card */}
-        <div className="bg-white p-2 md:p-12 rounded-chunky border-4 border-chocolate shadow-hard-chocolate space-y-6 md:space-y-10">
+        <div className="bg-white p-4 md:p-12 rounded-chunky border-4 border-chocolate shadow-hard-chocolate space-y-6 md:space-y-10">
           <p className="text-3xl md:text-3xl font-display text-chocolate leading-tight">
             Will you be mine? 
           </p>
