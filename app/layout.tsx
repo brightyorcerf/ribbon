@@ -21,11 +21,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Ribbon, Make Your Ask 💌",
     description: "Create a personalized link to ask your crush out",
-    url: "http://ribbonn.vercel.app",
+    url: "https://ribbonn.vercel.app",
     siteName: "Ribbon",
     images: [
       {
-        url: "http://ribbonn.vercel.app/og.jpg",
+        url: "https://ribbonn.vercel.app/og.jpg",
         width: 1200,
         height: 630,
         alt: "Ribbon, Make Your Ask",
