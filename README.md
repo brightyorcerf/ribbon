@@ -17,11 +17,11 @@ It's a digital page wrapped in nostalgic Y2K vibes.
 ## Dynamic Rouuting System 
 
 ### We use a "Slug-based Architecture." Here is the 3-step lifecycle:
+In a sense those new generated websites aren't being created we have the same website but different data
 
-The Identity (nanoid): we call nanoid(8), which generates a random, URL-safe string like k3J9f2Lm.
-The Database Entry: send that string (the slug) to Supabase along with the names and theme choice. The database now has a row that says: "Whenever someone visits the link with slug 'k3J9f2Lm', show them names X and Y."
-
-The Dynamic Route: vercel app is set up with a dynamic folder (likely app/be-mine/[slug]/page.tsx). When a user visits that URL, the page looks at the URL, grabs the slug, asks Supabase for the data matching that slug, and renders it on the fly.
+Identity (nanoid): we call nanoid(8), which generates a random, URL-safe string like k3J9f2Lm.
+Database Entry: send that string (the slug) to Supabase along with the names and theme choice. The database now has a row that says: "Whenever someone visits the link with slug 'k3J9f2Lm', show them names X and Y."
+Dynamic Route: vercel app is set up with a dynamic folder (likely app/be-mine/[slug]/page.tsx). When a user visits that URL, the page looks at the URL, grabs the slug, asks Supabase for the data matching that slug, and renders it on the fly.
 
 ### Will "Thousands of Links" be an issue?
 
