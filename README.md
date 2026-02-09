@@ -14,6 +14,25 @@ It's a digital page wrapped in nostalgic Y2K vibes.
 
 ---
 
+## Dynamic Rouuting System 
+
+### We use a "Slug-based Architecture." Here is the 3-step lifecycle:
+
+The Identity (nanoid): we call nanoid(8), which generates a random, URL-safe string like k3J9f2Lm.
+The Database Entry: send that string (the slug) to Supabase along with the names and theme choice. The database now has a row that says: "Whenever someone visits the link with slug 'k3J9f2Lm', show them names X and Y."
+
+The Dynamic Route: vercel app is set up with a dynamic folder (likely app/be-mine/[slug]/page.tsx). When a user visits that URL, the page looks at the URL, grabs the slug, asks Supabase for the data matching that slug, and renders it on the fly.
+
+### Will "Thousands of Links" be an issue?
+
+In short: No, not for a long time. 
+Collisions (The Math): Using nanoid(8) gives you a massive pool of possible combinations (281 trillion). To have a 1% chance of a collision, you would need to generate roughly 2 million links. Even then, your Supabase unique constraint would just throw an error, preventing a duplicate.
+
+Database Speed: PostgreSQL (Supabase) handles thousands of rows like a champion. Once you hit millions of rows, you just need to ensure your slug column is "Indexed" (which it likely is if it's your Primary Key) to keep lookups instant.
+
+Storage Space (The Real Bottleneck): This is where you might hit a limit first. You are resizing images to 400x400 JPEGs. 
+Supabase’s free tier typically caps storage at 1GB.  
+
 ## Roadblocks I hit while buidling this
 
 ### 1. Client-Side Image Resizing Before Upload
