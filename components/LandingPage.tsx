@@ -173,7 +173,7 @@ export default function LandingPage({ link }: LandingPageProps) {
         />
 
         <div className="relative z-10 text-center max-w-2xl w-full px-8 space-y-10">
-          <h1 className="text-6xl md:text-8xl font-display text-chocolate">
+          <h1 className="text-6xl md:text-8xl font-display text-white">
             🎉 YES! 🎉
           </h1>
           
@@ -365,7 +365,7 @@ export default function LandingPage({ link }: LandingPageProps) {
         {/* Question card */}
         <div className="bg-white p-6 md:p-12 rounded-chunky border-4 border-chocolate shadow-hard-chocolate space-y-6 md:space-y-10">
           <p className="text-3xl md:text-5xl font-display text-chocolate leading-tight">
-            Will you be mine? 💕
+            Will you be mine? 
           </p>
 
           {/* Buttons - proper sizing */}
@@ -391,7 +391,7 @@ export default function LandingPage({ link }: LandingPageProps) {
 
           {noClickCount > 0 && noClickCount < 3 && (
             <p className="font-mono text-sm text-chocolate/60 animate-pulse pt-4">
-              {noClickCount === 1 && "Think about it... 🥺"}
+              {noClickCount === 1 && "Think about it..."}
               {noClickCount === 2 && "Last chance! 💔"}
             </p>
           )}
