@@ -415,8 +415,8 @@ export default function LandingPage({ link }: LandingPageProps) {
         )}
 
         {/* Question card */}
-        <div className="bg-white p-6 md:p-12 rounded-chunky border-4 border-chocolate shadow-hard-chocolate space-y-6 md:space-y-10">
-          <p className="text-3xl md:text-5xl font-display text-chocolate leading-tight">
+        <div className="bg-white p-2 md:p-12 rounded-chunky border-4 border-chocolate shadow-hard-chocolate space-y-6 md:space-y-10">
+          <p className="text-3xl md:text-3xl font-display text-chocolate leading-tight">
             Will you be mine? 
           </p>
 
