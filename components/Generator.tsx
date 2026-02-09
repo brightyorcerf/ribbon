@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { nanoid } from 'nanoid'
 
@@ -49,7 +49,14 @@ export default function Generator() {
   const [iconPreview, setIconPreview] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedUrl, setGeneratedUrl] = useState<string | null>(null)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null) 
+
+  useEffect(() => {
+    document.body.classList.add('generator-bg')
+    return () => {
+      document.body.classList.remove('generator-bg')
+    }
+  }, [])
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -207,15 +214,7 @@ export default function Generator() {
   }
 
   return (
-    <div 
-      className="min-h-screen w-full flex items-center justify-center p-4 md:p-6"
-      style={{
-        backgroundImage: 'url(/background.jpg)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundAttachment: 'fixed'
-      }}
-    >
+    <div className="min-h-screen w-full flex items-center justify-center p-4 md:p-6">
       {/* Floating Capsule Container */}
       <div className="w-full max-w-[480px] relative z-10">
         
